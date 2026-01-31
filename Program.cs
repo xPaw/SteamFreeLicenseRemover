@@ -300,6 +300,11 @@ internal static class Program
 
         foreach (var license in licenseList.LicenseList)
         {
+            if ((license.LicenseFlags & ELicenseFlags.Borrowed) != 0)
+            {
+                continue;
+            }
+
             packages.Add(new SteamApps.PICSRequest(license.PackageID, license.AccessToken));
 
             if (license.PaymentMethod == EPaymentMethod.Complimentary && license.LicenseType == ELicenseType.SinglePurchase)
