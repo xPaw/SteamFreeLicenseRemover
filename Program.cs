@@ -443,6 +443,10 @@ internal static class Program
         using var logWriter = new StreamWriter($"RemovedLicenses_{steamUser.SteamID.AccountID}.log", append: true) { AutoFlush = true };
         await logWriter.WriteLineAsync($"--- Session started at {DateTime.UtcNow:O} ---").ConfigureAwait(false);
 
+        var allAppIds = complimentaryApps.Values.SelectMany(x => x).Distinct().ToList();
+        var totalApps = allAppIds.Count;
+        var currentApp = 0;
+
         var processedAppIds = new HashSet<uint>();
         var removedCount = 0;
         var skippedCount = 0;
@@ -457,10 +461,13 @@ internal static class Program
                     continue;
                 }
 
+                currentApp++;
+                var progress = $"[{currentApp}/{totalApps}]";
+
                 if (protectedAppIds.Contains(appId))
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"APP SKIPPED: {appId} is covered by a paid license");
+                    Console.WriteLine($"{progress} APP SKIPPED: {appId} is covered by a paid license");
                     Console.ResetColor();
                     await logWriter.WriteLineAsync($"SKIP: AppID {appId} (PackageID {packageId}) - covered by a paid license").ConfigureAwait(false);
                     skippedCount++;
@@ -472,7 +479,7 @@ internal static class Program
                 if (result == EResult.OK)
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"APP REMOVED: {appId}");
+                    Console.WriteLine($"{progress} APP REMOVED: {appId}");
                     Console.ResetColor();
                     await logWriter.WriteLineAsync($"REMOVED: AppID {appId} (PackageID {packageId})").ConfigureAwait(false);
                     removedCount++;
@@ -480,7 +487,7 @@ internal static class Program
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"APP FAILED: {appId} - {result}");
+                    Console.WriteLine($"{progress} APP FAILED: {appId} - {result}");
                     Console.ResetColor();
                     await logWriter.WriteLineAsync($"FAILED: AppID {appId} (PackageID {packageId}) - {result}").ConfigureAwait(false);
                     failedCount++;
